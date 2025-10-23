@@ -5,9 +5,36 @@ let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
 
+const doesExist = (username) => {
+    // Filter the users array for any user with the same username
+    let userswithsamename = users.filter((user) => {
+        return user.username === username;
+    });
+    // Return true if any user with the same username is found, otherwise false
+    if (userswithsamename.length > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 public_users.post("/register", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const username = req.body.username;
+    const password = req.body.password;
+
+    // Check if both username and password are provided
+    if (username && password) {
+        // Check if the user does not already exist
+        if (!doesExist(username)) {
+            // Add the new user to the users array
+            users.push({"username": username, "password": password});
+            return res.status(200).json({message: "User successfully registered. Now you can login"});
+        } else {
+            return res.status(404).json({message: "User already exists!"});
+        }
+    }
+    // Return error if username or password is missing
+    return res.status(404).json({message: "Unable to register user."});
 });
 
 // Get the book list available in the shop
@@ -16,10 +43,16 @@ public_users.get('/', function (req, res) {
   });  
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
- });
+public_users.get('/isbn/:isbn', function (req, res) {
+    const isbn = req.params.isbn;
+    const book = books[isbn]; // Access book by key
+  
+    if (book) {
+      return res.status(200).json(book); // Send the book details
+    } else {
+      return res.status(404).json({ message: "Book not found" });
+    }
+  });  
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
@@ -35,8 +68,14 @@ public_users.get('/title/:title',function (req, res) {
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const isbn = req.params.isbn;
+    const bookReviews = books[isbn].reviews; // Access book review by key
+  
+    if (bookReviews) {
+      return res.status(200).json(bookReviews); // Send the book details
+    } else {
+      return res.status(404).json({ message: "Book review not found" });
+    }
 });
 
 module.exports.general = public_users;
