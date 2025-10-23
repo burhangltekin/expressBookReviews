@@ -58,11 +58,46 @@ regd_users.post("/login", (req,res) => {
     }
 });
 
-// Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
-});
+    const isbn = req.params.isbn;
+    const { username, password } = req.body; // username & password from request body
+    const review = req.query.review;          // review text from query string
+  
+    // Validate username and password
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+  
+    // Authenticate the user
+    if (!authenticatedUser(username, password)) {
+      return res.status(403).json({ message: "Invalid username or password" });
+    }
+  
+    // Check if the book exists
+    if (!books[isbn]) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+  
+    // Validate review query
+    if (!review || review.trim() === "") {
+      return res.status(400).json({ message: "Review cannot be empty" });
+    }
+  
+    // Add or update this user's review
+    books[isbn].reviews[username] = review;
+  
+    // Create or refresh JWT token and store in session
+    const accessToken = jwt.sign({ data: password }, "access", { expiresIn: 60 * 60 });
+    req.session.authorization = { accessToken, username };
+  
+    return res.status(200).json({
+      message: "Review successfully added or updated",
+      book: books[isbn]
+    });
+  });
+  
+  
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
